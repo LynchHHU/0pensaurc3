@@ -44,13 +44,16 @@ local Autofarming = Window:MakeTab({
 Autofarming:AddLabel("NORMAL MOBS")
 
 local mob_list = {
-    "GreenDemon",
+    -- Demon List
+    "Green Demon",
     "GenericOni",
-    "GenericSlayer",
     "FrostyOni",
-    "BlueDemon",
+    "Blue Demon",
     "SlayerBoss",
-    "Zenitsu"
+
+    -- Slayer List
+    "GenericSlayer",
+    "Zenitsu",
 }
 
 Autofarming:AddDropdown({
@@ -73,8 +76,6 @@ Autofarming:AddToggle({
 Autofarming:AddLabel("BOSSES")
 
 local boss_list = {
-    "Kaigaku",
-    "Gyutaro",
     "Okuro",
     "Rui",
     "Lower Moon 2",
@@ -82,6 +83,8 @@ local boss_list = {
     "Akaza",
     "Doma",
     "Kokushibo",
+    "Kaigaku",
+    "Gyutaro",
 }
 
 Autofarming:AddDropdown({
@@ -117,9 +120,9 @@ Autofarming:AddSlider({
 
 local function getMob()
     local dist, mob = math.huge
-    for i, v in pairs(Workspace:GetChildren()) do
-        if v:IsA("Model") and v.Name == Settings["ChosenMob"] then
-            local get_mag = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v.PrimaryPart.Position).magnitude
+    for i,v in pairs(workspace:GetChildren()) do
+        if v:IsA("Model") and v.Name == Settings.ChosenMob then
+            local get_mag = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v:GetModelCFrame().p).magnitude
             if get_mag < dist then
                 dist = get_mag
                 mob = v
@@ -129,23 +132,23 @@ local function getMob()
     return mob
 end
 
-local function getBoss()
-    local dist, boss = math.huge
-    for i, v in pairs(Workspace:GetChildren()) do
-        if v:IsA("Model") and v.Name == Settings["ChosenBoss"] then
-            local get_mag = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v.PrimaryPart.Position).magnitude
+local function getBosses()
+    local dist, mob = math.huge
+    for i,v in pairs(workspace:GetChildren()) do
+        if v:IsA("Model") and v.Name == Settings.ChosenBoss then
+            local get_mag = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v:GetModelCFrame().p).magnitude
             if get_mag < dist then
                 dist = get_mag
-                boss = v
+                mob = v
             end
         end
     end
-    return boss
+    return mob
 end
 
 spawn(function()
-  while wait() do
-      if Settings.autofarm_mobs then
+    while wait() do
+        if Settings.autofarm_mobs then
             pcall(function()
                 local enemy_mag = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - getMob():GetModelCFrame().p).magnitude
 
@@ -190,12 +193,67 @@ spawn(function()
                     else
                         game:GetService("ReplicatedStorage").Remotes.Async:FireServer("Katana", "Server")
                     end
-                    
+
                 end
-                  
+
             end)
-        end       
-    end    
+        end
+    end
+end)
+
+spawn(function()
+    while wait() do
+        if Settings.autofarm_boss then
+            pcall(function()
+                local enemy_mag = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - getBosses():GetModelCFrame().p).magnitude
+
+                if not getBosses():FindFirstChild("Executed") then
+                    moveto(getBosses():GetModelCFrame() * CFrame.new(0,0,3), tonumber(Settings.TpSpeed or 75))
+                end
+
+                if game.Players.LocalPlayer.Character:FindFirstChildWhichIsA("Model"):FindFirstChild("Blade") then
+                    if game.Players.LocalPlayer.Character:FindFirstChildWhichIsA("Model"):FindFirstChild("Equipped").Part0 == nil then
+                        game:GetService("VirtualInputManager"):SendKeyEvent(true, "R", false, game)
+                    end
+                end
+
+                if getBosses():FindFirstChild("Executed") then
+                    wait(1)
+                    getBosses():Destroy()
+                end
+
+                if getBosses():FindFirstChild("Down") then
+                    moveto(getBosses():GetModelCFrame() * CFrame.new(0,0,3), tonumber(Settings.TpSpeed or 75))
+                    game:GetService("ReplicatedStorage").Remotes.Sync:InvokeServer("Character", "Execute")
+                end
+
+                for Index, Value in next, plr.Character:GetChildren() do
+                    if Value.Name == "Stun"
+                        or Value.Name == "Attacking"
+                        or Value.Name == "AttackAnnounce"
+                        or Value.Name == "Busy"
+                        or Value.Name == "SequenceCooldown"
+                        or Value.Name == "SequenceFactor"
+                        or Value.Name == "HeavyCooldown"
+                        or Value.Name == "Sequence"
+                        or Value.Name == "SequenceFactor"
+                    then
+                        Value:Destroy()
+                    end
+                end
+
+                if enemy_mag <= 10 then
+                    if getBosses():FindFirstChild("Block") then
+                        game:GetService("ReplicatedStorage").Remotes.Async:FireServer("Katana", "Heavy")
+                    else
+                        game:GetService("ReplicatedStorage").Remotes.Async:FireServer("Katana", "Server")
+                    end
+
+                end
+
+            end)
+        end
+    end
 end)
 
 local Tab = Window:MakeTab({
