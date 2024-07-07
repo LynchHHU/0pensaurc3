@@ -44,12 +44,12 @@ local Autofarming = Window:MakeTab({
 Autofarming:AddLabel("NORMAL MOBS")
 
 local mob_list = {
-    "Green Demon",
-    "Generic Oni",
-    "Generic Slayer",
-    "Frosty Oni",
-    "Blue Demon",
-    "Slayer Boss",
+    "GreenDemon",
+    "GenericOni",
+    "GenericSlayer",
+    "FrostyOni",
+    "BlueDemon",
+    "SlayerBoss",
     "Zenitsu"
 }
 
