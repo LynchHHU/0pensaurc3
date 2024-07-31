@@ -210,7 +210,6 @@ Tabs.use:AddParagraph({
     Title = "Step 3",
     Content = "dont pick up the "-" bag that's all enjoy duping"
 })
-
 -- // close gui \\ --
 
 local ScreenGui = Instance.new("ScreenGui")
