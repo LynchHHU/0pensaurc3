@@ -5,225 +5,174 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 
 -- // Window \\ --
 local Window = Fluent:CreateWindow({
-Title = "DF Dupe By LynchGamingYT",
-SubTitle = "",
-TabWidth = 160,
-Size = UDim2.fromOffset(450, 300),
-Acrylic = false,
-Theme = "Darker",
-MinimizeKey = Enum.KeyCode.RightControl
+    Title = "DF Dupe",
+    SubTitle = "by LynchYT",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(450, 300),
+    Acrylic = false,
+    Theme = "Darker",
+    MinimizeKey = Enum.KeyCode.RightControl
 })
 
--- // tabs \\ --
+-- // Tabs \\ --
 local Tabs = {
-Dupe1 = Window:AddTab({ Title = "| Dupe 1", Icon = "crown" }),
-Dupe2 = Window:AddTab({ Title = "| Dupe 2", Icon = "crown" }),
-Dupe3 = Window:AddTab({ Title = "| Dupe 3", Icon = "crown" }),
-use = Window:AddTab({ Title = "| How To Use", Icon = "info" }),
+    Information = Window:AddTab({ Title = "| Credits", Icon = "user" }),
+    DupePotion = Window:AddTab({ Title = "| Dupe Potion", Icon = "crown" }),
+    DupeTrinket = Window:AddTab({ Title = "| Dupe Trinket", Icon = "crown" }),
+    DupeItems = Window:AddTab({ Title = "| Dupe Items", Icon = "crown" }),
+    DupeFoods = Window:AddTab({ Title = "| Dupe Foods", Icon = "crown" }),
 }
-local Options = Fluent.Options
 
--- // dupe tabs \\ --
+-------Info
 
-local function DupeItem(itemName)
-    local executed = false
+local player = game.Players.LocalPlayer
+local gameName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+local executorName = syn and "Synapse" or getexecutorname()
 
-    if not executed then
+Tabs.Information:AddParagraph({
+    Title = "USERNAME : " .. player.Name,
+    Content = ""
+})
+
+Tabs.Information:AddParagraph({
+    Title = "GAME : " .. gameName,
+    Content = ""
+})
+
+Tabs.Information:AddParagraph({
+    Title = "EXECUTOR : " .. executorName,
+    Content = ""
+})
+
+Tabs.Information:AddButton({
+    Title = "DISCORD SERVER",
+    Callback = function()
+        local executed = false
+
+        if not executed then
+            setclipboard("https://discord.com/invite/PEV2FRsrGh")
+            Fluent:Notify({
+                Title = "Notification",
+                Content = "Copy Successful",
+                SubContent = "",
+                Duration = 5
+            })
+            executed = true
+        end
+    end
+})
+
+Tabs.Information:AddButton({
+    Title = "YOUTUBE CHANNEL",
+    Callback = function()
+        local executed = false
+
+        if not executed then
+            setclipboard("https://youtube.com/@lynchgamingyt?si=JpRBdRulxZxABnaX")
+            Fluent:Notify({
+                Title = "Notification",
+                Content = "Copy Successful",
+                SubContent = "",
+                Duration = 5
+            })
+            executed = true
+        end
+    end
+})
+
+-- // Function to duplicate items \\ --
+local function DupeItems(itemNames)
+    for _, itemName in ipairs(itemNames) do
         local args = {
             [1] = "HUD",
             [2] = "Inventory",
             [3] = "Drop",
             [4] = itemName,
-            [5] = -1000
+            [5] = -99999
         }
-
+        
         game:GetService("ReplicatedStorage").Remotes.Sync:InvokeServer(unpack(args))
         
         Fluent:Notify({
             Title = "Notification",
-            Content = "Dupe Successful Check Your Inventory for " .. itemName,
-            SubContent = "",
+            Content = "Dupe Successful! Check Your Inventory for " .. itemName,
             Duration = 3
         })
-        
-        executed = true
     end
 end
 
-Tabs.Dupe1:AddButton({
-    Title = "Dupe Wipe Potion",
-    Callback = function()
-        DupeItem("Wipe Potion")
-    end
-})
+-- // Utility function to add dropdown and button for duplication \\ --
+local function AddDupeSection(tab, title, values)
+    local selectedItem -- Declare selected item
 
-Tabs.Dupe1:AddButton({
-    Title = "Dupe Combat Potion",
-    Callback = function()
-        DupeItem("Combat Potion")
-    end
-})
+    local Dropdown = tab:AddDropdown(title, {
+        Title = title,
+        Values = values,
+        Multi = false,
+        Default = 1,
+    })
 
-Tabs.Dupe1:AddButton({
-    Title = "Dupe Muzan Blood",
-    Callback = function()
-        DupeItem("Muzan Blood")
-    end
-})
+    Dropdown:OnChanged(function(value)
+        selectedItem = value
+    end)
 
-Tabs.Dupe1:AddButton({
-    Title = "Dupe Breath Indict",
-    Callback = function()
-        DupeItem("Breath Indict")
-    end
-})
+    tab:AddButton({
+        Title = "Dupe Selected Item",
+        Callback = function()
+            if selectedItem then -- Check if an item has been selected
+                DupeItems({selectedItem}) -- Call DupeItems with the selected item
+            else
+                Fluent:Notify({
+                    Title = "Error!",
+                    Content = "No item selected. Please select an item from the dropdown.",
+                    Duration = 3
+                })
+            end
+        end
+    })
 
-Tabs.Dupe1:AddButton({
-    Title = "Perfect Crystal",
-    Callback = function()
-        DupeItem("Perfect Crystal")
-    end
-})
+    -- Adding instruction paragraphs to each tab
+    tab:AddParagraph({
+        Title = "Step 1",
+        Content = "Make sure you have the item that you want to dupe"
+    })
 
-Tabs.Dupe1:AddButton({
-    Title = "Red Jewel",
-    Callback = function()
-        DupeItem("Red Jewel")
-    end
-})
+    tab:AddParagraph({
+        Title = "Step 2",
+        Content = "Find the item you want to dupe in the dropdown and then click the button"
+    })
+end
 
-Tabs.Dupe1:AddButton({
-    Title = "Green Jewel",
-    Callback = function()
-        DupeItem("Green Jewel")
-    end
-})
+-- // Adding Duplication Sections \\ --
+AddDupeSection(Tabs.DupePotion, "POTIONS", {"Wipe Potion", "Combat Potion", "Breath Indict", "Muzan Blood"})
+AddDupeSection(Tabs.DupeTrinket, "TRINKETS", {"Perfect Crystal", "Green Jewel", "Red Jewel", "Gold Crown", 
+                                                 "Ancient Coin", "Golden Ring", "Gold Jar", "Gold Goblet"})
+AddDupeSection(Tabs.DupeItems, "ITEMS", {"Iron Ore", "Sun Ore", "Demon Horn", 
+                                          "Broken Nichirin", "Blue Horn","Green Horn","Demon Collar",
+                                          "Crystal Key","Weapon Parts"})
+AddDupeSection(Tabs.DupeFoods, "FOODS", {"Premium Meat", "Meat", "Soup", "Bread"})
 
--- // dupe tab 2 \\ --
 
-Tabs.Dupe2:AddButton({
-    Title = "Blue Horn",
-    Callback = function()
-        DupeItem("Blue Horn")
-    end
-})
+-- // Close GUI Button \\ --
+local ScreenGui= Instance.new("ScreenGui")
+local ImageButton= Instance.new("ImageButton")
+local UICorner= Instance.new("UICorner")
 
-Tabs.Dupe2:AddButton({
-    Title = "Broken Nichirin",
-    Callback = function()
-        DupeItem("Broken Nichirin")
-    end
-})
+ScreenGui.Name= ""
+ScreenGui.Parent= game.CoreGui or game.Players.LocalPlayer.PlayerGui
+ScreenGui.ZIndexBehavior= Enum.ZIndexBehavior.Sibling
 
-Tabs.Dupe2:AddButton({
-    Title = "Crystal Essence",
-    Callback = function()
-        DupeItem("Crystal Essence")
-    end
-})
+ImageButton.Parent= ScreenGui
+ImageButton.BackgroundColor3= Color3.fromRGB(0, 0, 0)
+ImageButton.BackgroundTransparency= 1
+ImageButton.BorderSizePixel= 0
+ImageButton.Position= UDim2.new(0.120833337, 0, 0.0952890813, 0)
+ImageButton.Size= UDim2.new(0, 50, 0, 50)
+ImageButton.Image= "https://www.roblox.com/asset/?id=18687520299"
 
-Tabs.Dupe2:AddButton({
-    Title = "Dark Thunder Essence",
-    Callback = function()
-        DupeItem("Dark Thunder Essence")
-    end
-})
+UICorner.Parent= ImageButton
 
-Tabs.Dupe2:AddButton({
-    Title = "Demon Colar",
-    Callback = function()
-        DupeItem("Demon Colar")
-    end
-})
-
-Tabs.Dupe2:AddButton({
-    Title = "Demon Horns",
-    Callback = function()
-        DupeItem("Demon Horns")
-    end
-})
-
-Tabs.Dupe2:AddButton({
-    Title = "Green Horn",
-    Callback = function()
-        DupeItem("Green Horn")
-    end
-})
-
-Tabs.Dupe2:AddButton({
-    Title = "Kokushibo Blood",
-    Callback = function()
-        DupeItem("Kokushibo Blood")
-    end
-})
-
--- // Dupe 3 \\ --
-
-Tabs.Dupe3:AddButton({
-    Title = "Iron Ore",
-    Callback = function()
-        DupeItem("Iron Ore")
-    end
-})
-
-Tabs.Dupe3:AddButton({
-    Title = "Sun Ore",
-    Callback = function()
-        DupeItem("Sun Ore")
-    end
-})
-
-Tabs.Dupe3:AddButton({
-    Title = "Weapon Part",
-    Callback = function()
-        DupeItem("Weapon Part")
-    end
-})
-
-Tabs.Dupe3:AddButton({
-    Title = "Crystal Key",
-    Callback = function()
-        DupeItem("Crystal Key")
-    end
-})
-
-Tabs.Dupe3:AddButton({
-    Title = "Premium Meat",
-    Callback = function()
-        DupeItem("Premium Meat")
-    end
-})
-
--- // How to use \\ --
-
-Tabs.use:AddParagraph({
-    Title = "Step 1",
-    Content = "Make sure you have the item that you want to dupe"
-})
-
-Tabs.use:AddParagraph({
-    Title = "Step 2",
-    Content = "Find the item name that you want to dupe on gui then click and dont pick up the "-" bag that's all enjoy duping"
-})
-
--- // close gui \\ --
-
-local ScreenGui = Instance.new("ScreenGui")
-local ImageButton = Instance.new("ImageButton")
-local UICorner = Instance.new("UICorner")
-ScreenGui.Name = ""
-ScreenGui.Parent = game.CoreGui or game.Players.LocalPlayer.PlayerGui
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ImageButton.Parent = ScreenGui
-ImageButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-ImageButton.BackgroundTransparency = 1
-ImageButton.BorderSizePixel = 0
-ImageButton.Position = UDim2.new(0.120833337, 0, 0.0952890813, 0)
-ImageButton.Size = UDim2.new(0, 50, 0, 50)
-ImageButton.Draggable = true
-ImageButton.Image = "https://www.roblox.com/asset/?id=18687520299"
-UICorner.Parent = ImageButton
-ImageButton.MouseButton1Down:connect(function()
-       game:GetService("VirtualInputManager"):SendKeyEvent(true,305,false,game)
-       game:GetService("VirtualInputManager"):SendKeyEvent(false,305,false,game)
+ImageButton.MouseButton1Down:Connect(function()
+    game:GetService("VirtualInputManager"):SendKeyEvent(true,305,false,game)
+    game:GetService("VirtualInputManager"):SendKeyEvent(false,305,false,game)
 end)
