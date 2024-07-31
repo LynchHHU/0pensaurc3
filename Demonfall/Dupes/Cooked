@@ -5,8 +5,8 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 
 -- // Window \\ --
 local Window = Fluent:CreateWindow({
-Title = "DF Dupe",
-SubTitle = "by LynchYT",
+Title = "DF Dupe By LynchGamingYT",
+SubTitle = "",
 TabWidth = 160,
 Size = UDim2.fromOffset(450, 300),
 Acrylic = false,
@@ -16,9 +16,9 @@ MinimizeKey = Enum.KeyCode.RightControl
 
 -- // tabs \\ --
 local Tabs = {
-Dupe1 = Window:AddTab({ Title = "| Dupe Potion", Icon = "crown" }),
-Dupe2 = Window:AddTab({ Title = "| Dupe Potion", Icon = "crown" }),
-Dupe3 = Window:AddTab({ Title = "| Dupe Potion", Icon = "crown" }),
+Dupe1 = Window:AddTab({ Title = "| Dupe 1", Icon = "crown" }),
+Dupe2 = Window:AddTab({ Title = "| Dupe 2", Icon = "crown" }),
+Dupe3 = Window:AddTab({ Title = "| Dupe 3", Icon = "crown" }),
 use = Window:AddTab({ Title = "| How To Use", Icon = "info" }),
 }
 local Options = Fluent.Options
