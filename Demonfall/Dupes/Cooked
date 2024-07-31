@@ -203,13 +203,9 @@ Tabs.use:AddParagraph({
 
 Tabs.use:AddParagraph({
     Title = "Step 2",
-    Content = "Find the item name that you want to dupe on gui then click"
+    Content = "Find the item name that you want to dupe on gui then click and dont pick up the "-" bag that's all enjoy duping"
 })
 
-Tabs.use:AddParagraph({
-    Title = "Step 3",
-    Content = "dont pick up the "-" bag that's all enjoy duping"
-})
 -- // close gui \\ --
 
 local ScreenGui = Instance.new("ScreenGui")
