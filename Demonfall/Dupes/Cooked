@@ -149,7 +149,7 @@ AddDupeSection(Tabs.DupeTrinket, "TRINKETS", {"Perfect Crystal", "Green Jewel", 
                                                  "Ancient Coin", "Golden Ring", "Gold Jar", "Gold Goblet"})
 AddDupeSection(Tabs.DupeItems, "ITEMS", {"Iron Ore", "Sun Ore", "Demon Horn", 
                                           "Broken Nichirin", "Blue Horn","Green Horn","Demon Collar",
-                                          "Crystal Key","Weapon Parts", "Crystal Essence",})
+                                          "Crystal Key","Weapon Parts", "Crystal Essence","Dark Thunder Essence",})
 AddDupeSection(Tabs.DupeFoods, "FOODS", {"Premium Meat", "Meat", "Soup", "Bread"})
 
 
