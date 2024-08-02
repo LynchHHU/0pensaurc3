@@ -108,7 +108,7 @@ local function AddDupeSection(tab, title, values)
     local Dropdown = tab:AddDropdown(title, {
         Title = title,
         Values = values,
-        Multi = true,
+        Multi = false,
         Default = 1,
     })
 
