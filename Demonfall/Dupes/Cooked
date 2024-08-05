@@ -1,86 +1,323 @@
--- // Loader \\ --
+-- Vars
+local plr = game:GetService("Players").LocalPlayer
+local TweenService = game:GetService("TweenService")
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local noclipE = false
+local antifall = nil
+local currentTween = nil
+local Settings = {
+    ["autofarm_mobs"] = false,
+    ["autofarm_boss"] = false,
+    ["TpSpeed"] = 75,
+    ["ChosenMob"] = "Green Demon",
+    ["ChosenBoss"] = "Okuro"
+}
+
+local function noclip()
+    for i, v in pairs(plr.Character:GetDescendants()) do
+        if v:IsA("BasePart") and v.CanCollide == true then
+            v.CanCollide = false
+        end
+    end
+end
+
+local function moveto(obj, speed)
+    if currentTween then
+        currentTween:Cancel()
+    end
+
+    local info = TweenInfo.new(((plr.Character.HumanoidRootPart.Position - obj.Position).Magnitude) / speed, Enum.EasingStyle.Linear)
+    local tween = TweenService:Create(plr.Character.HumanoidRootPart, info, {CFrame = obj})
+
+    if not plr.Character.HumanoidRootPart:FindFirstChild("BodyVelocity") then
+        antifall = Instance.new("BodyVelocity", plr.Character.HumanoidRootPart)
+        antifall.Velocity = Vector3.new(0, 0, 0)
+        noclipE = game:GetService("RunService").Stepped:Connect(noclip)
+    end
+
+    tween:Play()
+    currentTween = tween
+
+    tween.Completed:Connect(function()
+        if antifall then antifall:Destroy() end
+        if noclipE then noclipE:Disconnect() end
+        currentTween = nil
+    end)
+
+    spawn(function()
+        while tween.PlaybackState == Enum.PlaybackState.Playing do
+            if not Settings["autofarm_mobs"] and not Settings["autofarm_boss"] then
+                tween:Cancel()
+                if antifall then antifall:Destroy() end
+                if noclipE then noclipE:Disconnect() end
+                currentTween = nil
+                break
+            end
+            wait(0.1)
+        end
+    end)
+end
+
+-- Mobs list
+local mob_list = {
+    "Green Demon",
+    "GenericOni",
+    "FrostyOni",
+    "Blue Demon",
+    "SlayerBoss",
+    "GenericSlayer",
+    "Zenitsu",
+}
+
+local boss_list = {
+    "Okuro",
+    "Rui",
+    "Lower Moon 2",
+    "Lower Moon 3",
+    "Akaza",
+    "Doma",
+    "Kokushibo",
+    "Kaigaku",
+    "Gyutaro",
+}
+
+-- Loader
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
 local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
--- // Window \\ --
+-- Window
 local Window = Fluent:CreateWindow({
-    Title = "DF Dupe",
+    Title = "Demonfall AF",
     SubTitle = "by LynchYT",
     TabWidth = 160,
-    Size = UDim2.fromOffset(450, 300),
+    Size = UDim2.fromOffset(543, 300),
     Acrylic = false,
-    Theme = "Darker",
+    Theme = "Amethyst",
     MinimizeKey = Enum.KeyCode.RightControl
 })
 
--- // Tabs \\ --
+Fluent:Notify({
+        Title = "",
+        Content = "THANK YOU FOR USING MY SCRIPT",
+        SubContent = "",
+        Duration = 3
+})
+
+-- Tabs
 local Tabs = {
-    Information = Window:AddTab({ Title = "| Credits", Icon = "user" }),
-    DupePotion = Window:AddTab({ Title = "| Dupe Potion", Icon = "crown" }),
-    DupeTrinket = Window:AddTab({ Title = "| Dupe Trinket", Icon = "crown" }),
-    DupeItems = Window:AddTab({ Title = "| Dupe Items", Icon = "crown" }),
-    DupeFoods = Window:AddTab({ Title = "| Dupe Foods", Icon = "crown" }),
+    Farming = Window:AddTab({ Title = "| Farming", Icon = "swords" }),
+    Misc = Window:AddTab({ Title = "| misc", Icon = "settings" }),
+    Dupe = Window:AddTab({ Title = "| Dupe", Icon = "crown" }),
+}
+local Options = Fluent.Options
+
+--Farming
+Tabs.Farming:AddButton({
+    Title = "Inf Health",
+    Callback = function()
+        game:GetService("ReplicatedStorage").Remotes.Async:FireServer("Character","FallDamageServer", 0/0)
+    end
+})
+
+local AutoGourdToggle = Tabs.Farming:AddToggle("AutoGourdToggle", { Title = "Auto Attack (Demon)", Default = false })
+AutoGourdToggle:OnChanged(function(v)
+    Settings["AutoGourd"] = v
+end)
+
+-- Farming Mobs
+local DropdownMobs = Tabs.Farming:AddDropdown("DropdownMobs", {
+    Title = "Mobs ",
+    Values = mob_list,
+    Multi = false,
+    Default = 1,
+})
+
+DropdownMobs:SetValue("Green Demon")
+
+DropdownMobs:OnChanged(function(v)
+    Settings["ChosenMob"] = v
+end)
+
+local ToggleMobs = Tabs.Farming:AddToggle("MyToggleMobs", {Title = "AutoFarm Mobs", Default = false })
+
+ToggleMobs:OnChanged(function(v)
+    Settings["autofarm_mobs"] = v
+    if not v and currentTween then
+        currentTween:Cancel()
+    end
+end)
+
+Options.MyToggleMobs:SetValue(false)
+
+-- Farming Boss
+local DropdownBoss = Tabs.Farming:AddDropdown("DropdownBoss", {
+    Title = "Bosses ",
+    Values = boss_list,
+    Multi = false,
+    Default = 1,
+})
+
+DropdownBoss:SetValue("Okuro")
+
+DropdownBoss:OnChanged(function(v)
+    Settings["ChosenBoss"] = v
+end)
+
+local ToggleBoss = Tabs.Farming:AddToggle("MyToggleBoss", {Title = "AutoFarm Bosses", Default = false })
+
+ToggleBoss:OnChanged(function(v)
+    Settings["autofarm_boss"] = v
+    if not v and currentTween then
+        currentTween:Cancel()
+    end
+end)
+
+Options.MyToggleBoss:SetValue(false)
+
+-- Tween Speed
+local Slider = Tabs.Farming:AddSlider("Slider", {
+    Title = "Tween Speed",
+    Description = "",
+    Default = 100,
+    Min = 50,
+    Max = 500,
+    Rounding = 10,
+    Callback = function(v)
+        Settings["TpSpeed"] = v
+    end
+})
+
+Slider:OnChanged(function(v)
+    Settings["TpSpeed"] = v
+end)
+
+Slider:SetValue(75)
+
+-- Farming Features
+local function getClosestTarget(targetName)
+    local dist, target = math.huge
+    for _, v in pairs(Workspace:GetChildren()) do
+        if v:IsA("Model") and v.Name == targetName then
+            local mag = (plr.Character.HumanoidRootPart.Position - v:GetModelCFrame().p).Magnitude
+            if mag < dist then
+                dist = mag
+                target = v
+            end
+        end
+    end
+    return target
+end
+
+local function autofarm(type, targetName)
+    while Settings["autofarm_" .. type] do
+        wait()
+        pcall(function()
+            local target = getClosestTarget(targetName)
+            if not target then return end
+
+            local enemy_mag = (plr.Character.HumanoidRootPart.Position - target:GetModelCFrame().p).Magnitude
+
+            if not target:FindFirstChild("Executed") then
+                moveto(target:GetModelCFrame() * CFrame.new(0, 0, 3), tonumber(Settings.TpSpeed or 75))
+            end
+
+            local characterModel = plr.Character:FindFirstChildWhichIsA("Model")
+            if characterModel and characterModel:FindFirstChild("Blade") then
+                if not characterModel:FindFirstChild("Equipped").Part0 then
+                    game:GetService("VirtualInputManager"):SendKeyEvent(true, "R", false, game)
+                end
+            end
+
+            if target:FindFirstChild("Executed") then
+                wait(1)
+                target:Destroy()
+            end
+
+            if target:FindFirstChild("Down") then
+                moveto(target:GetModelCFrame() * CFrame.new(0, 0, 3), tonumber(Settings.TpSpeed or 75))
+                ReplicatedStorage.Remotes.Sync:InvokeServer("Character", "Execute")
+            end
+
+            for _, v in pairs(plr.Character:GetChildren()) do
+                if v:IsA("StringValue") and (v.Name == "Stun" or v.Name == "Attacking" or v.Name == "AttackAnnounce" or v.Name == "Busy" or v.Name == "SequenceCooldown" or v.Name == "SequenceFactor" or v.Name == "HeavyCooldown" or v.Name == "Sequence" or v.Name == "SequenceFactor") then
+                    v:Destroy()
+                end
+            end
+
+            if enemy_mag <= 10 then
+                if target:FindFirstChild("Block") then
+                    ReplicatedStorage.Remotes.Async:FireServer("Katana", "Heavy")
+                else
+                    ReplicatedStorage.Remotes.Async:FireServer("Katana", "Server")
+                end
+            end
+        end)
+    end
+end
+
+spawn(function()
+    while wait() do
+        if Settings["autofarm_mobs"] and Settings["ChosenMob"] then
+            autofarm("mobs", Settings["ChosenMob"])
+        end
+    end
+end)
+
+spawn(function()
+    while wait() do
+        if Settings["autofarm_boss"] and Settings["ChosenBoss"] then
+            autofarm("boss", Settings["ChosenBoss"])
+        end
+    end
+end)
+
+-- Auto LMB Function
+local args = {
+    [1] = "Combat",
+    [2] = "Server"
 }
 
--------Info
+local heavyAttackArgs = {
+    [1] = "Combat",
+    [2] = "HeavyAttack"
+}
 
-local player = game.Players.LocalPlayer
-local gameName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
-local executorName = syn and "Synapse" or getexecutorname()
+spawn(function()
+    while wait(0.1) do
+        if Settings.AutoGourd then
+            pcall(function()
+                local virtualInputManager = game:GetService("VirtualInputManager")
+                local replicatedStorage = game:GetService("ReplicatedStorage")
+                local remotes = replicatedStorage:FindFirstChild("Remotes")
+                local player = game.Players.LocalPlayer
+                local humanoidRootPart = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 
-Tabs.Information:AddParagraph({
-    Title = "USERNAME : " .. player.Name,
-    Content = ""
-})
-
-Tabs.Information:AddParagraph({
-    Title = "GAME : " .. gameName,
-    Content = ""
-})
-
-Tabs.Information:AddParagraph({
-    Title = "EXECUTOR : " .. executorName,
-    Content = ""
-})
-
-Tabs.Information:AddButton({
-    Title = "DISCORD SERVER",
-    Callback = function()
-        local executed = false
-
-        if not executed then
-            setclipboard("https://discord.com/invite/PEV2FRsrGh")
-            Fluent:Notify({
-                Title = "Notification",
-                Content = "Copy Successful",
-                SubContent = "",
-                Duration = 5
-            })
-            executed = true
+                if remotes and remotes:FindFirstChild("Async") and humanoidRootPart then
+                    for i, v in pairs(workspace:GetChildren()) do
+                        if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v:FindFirstChild("Humanoid").Health > 0 then
+                            local partmag = (humanoidRootPart.Position - v.HumanoidRootPart.Position).magnitude
+                            if partmag < 20 then
+                                -- Simulate mouse button event for light attack
+                                virtualInputManager:SendMouseButtonEvent(500, 500, 0, true, game, 1)
+                                -- Invoke server function for light attack
+                                remotes.Async:FireServer(unpack(args))
+                                -- Simulate mouse button event for heavy attack
+                                virtualInputManager:SendMouseButtonEvent(500, 500, 1, true, game, 1)
+                                -- Invoke server function for heavy attack
+                                remotes.Async:FireServer(unpack(heavyAttackArgs))
+                                break -- Attack one mob at a time
+                            end
+                        end
+                    end
+                end
+            end)
         end
     end
-})
+end)
 
-Tabs.Information:AddButton({
-    Title = "YOUTUBE CHANNEL",
-    Callback = function()
-        local executed = false
-
-        if not executed then
-            setclipboard("https://youtube.com/@lynchgamingyt?si=JpRBdRulxZxABnaX")
-            Fluent:Notify({
-                Title = "Notification",
-                Content = "Copy Successful",
-                SubContent = "",
-                Duration = 5
-            })
-            executed = true
-        end
-    end
-})
-
--- // Function to duplicate items \\ --
+---Dupe tabs
 local function DupeItems(itemNames)
     for _, itemName in ipairs(itemNames) do
         local args = {
@@ -88,7 +325,7 @@ local function DupeItems(itemNames)
             [2] = "Inventory",
             [3] = "Drop",
             [4] = itemName,
-            [5] = -9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
+            [5] = -999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
         }
         
         game:GetService("ReplicatedStorage").Remotes.Sync:InvokeServer(unpack(args))
@@ -101,57 +338,64 @@ local function DupeItems(itemNames)
     end
 end
 
--- // Utility function to add dropdown and button for duplication \\ --
-local function AddDupeSection(tab, title, values)
-    local selectedItem -- Declare selected item
+local item_list = {
+    "Wipe Potion", "Combat Potion", "Breath Indict", "Muzan Blood", "Perfect Crystal", "Green Jewel", "Red Jewel", "Gold Crown", "Ancient Coin", "Golden Ring", "Gold Jar", "Gold Goblet", "Iron Ore", "Sun Ore", "Demon Horn", "Broken Nichirin", "Blue Horn","Green Horn","Demon Collar","Crystal Key","Weapon Parts", "Crystal Essence","Dark Thunder Essence", "Premium Meat", "Meat", "Soup", "Bread"
+}
 
-    local Dropdown = tab:AddDropdown(title, {
-        Title = title,
-        Values = values,
-        Multi = false,
-        Default = 1,
-    })
+local selectedItem
 
-    Dropdown:OnChanged(function(value)
-        selectedItem = value
-    end)
+Tabs.Dupe:AddParagraph({
+    Title = "Step 1",
+    Content = "Make sure you have the item that you want to dupe"
+})
 
-    tab:AddButton({
-        Title = "Dupe Selected Item",
-        Callback = function()
-            if selectedItem then -- Check if an item has been selected
-                DupeItems({selectedItem}) -- Call DupeItems with the selected item
-            else
-                Fluent:Notify({
-                    Title = "Error!",
-                    Content = "No item selected. Please select an item from the dropdown.",
-                    Duration = 3
-                })
-            end
+Tabs.Dupe:AddParagraph({
+    Title = "Step 2",
+    Content = "Find the item you want to dupe in the dropdown or input, and then click the button"
+})
+
+
+local Input = Tabs.Dupe:AddInput("Input", {
+    Title = "ITEM NAME",
+    Description = "",
+    Default = "Default",
+    Placeholder = "Placeholder",
+    Numeric = false,
+    Finished = false,
+    Callback = function(Value)
+        selectedItem = Value
+        print("Input changed:", Value)
+    end
+})
+
+local Dropdown = Tabs.Dupe:AddDropdown("Dropdown", {
+    Title = "ITEM LIST",
+    Description = "",
+    Values = item_list,
+    Multi = false,
+    Default = 1,
+})
+
+Dropdown:OnChanged(function(Value)
+    selectedItem = Value
+    print("Dropdown changed:", Value)
+end)
+
+Tabs.Dupe:AddButton({
+    Title = "CLICK HERE TO DUPE",
+    Description = "",
+    Callback = function()
+        if selectedItem then
+            DupeItems({selectedItem})
+        else
+            Fluent:Notify({
+                Title = "Error!",
+                Content = "No item selected. Please select an item from the dropdown or input.",
+                Duration = 3
+            })
         end
-    })
-
-    -- Adding instruction paragraphs to each tab
-    tab:AddParagraph({
-        Title = "Step 1",
-        Content = "Make sure you have the item that you want to dupe"
-    })
-
-    tab:AddParagraph({
-        Title = "Step 2",
-        Content = "Find the item you want to dupe in the dropdown and then click the button"
-    })
-end
-
--- // Adding Duplication Sections \\ --
-AddDupeSection(Tabs.DupePotion, "POTIONS", {"Wipe Potion", "Combat Potion", "Breath Indict", "Muzan Blood"})
-AddDupeSection(Tabs.DupeTrinket, "TRINKETS", {"Perfect Crystal", "Green Jewel", "Red Jewel", "Gold Crown", 
-                                                 "Ancient Coin", "Golden Ring", "Gold Jar", "Gold Goblet"})
-AddDupeSection(Tabs.DupeItems, "ITEMS", {"Iron Ore", "Sun Ore", "Demon Horn", 
-                                          "Broken Nichirin", "Blue Horn","Green Horn","Demon Collar",
-                                          "Crystal Key","Weapon Parts", "Crystal Essence","Dark Thunder Essence",})
-AddDupeSection(Tabs.DupeFoods, "FOODS", {"Premium Meat", "Meat", "Soup", "Bread"})
-
+    end
+})
 
 -- // Close GUI Button \\ --
 local ScreenGui= Instance.new("ScreenGui")
