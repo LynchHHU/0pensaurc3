@@ -1,39 +1,43 @@
--- Vars
-local plr = game:GetService("Players").LocalPlayer
+-- // Vars \\ --
+local noclipE = nil
+local antifall = nil
+local currentTween = nil
+local plr = game.Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local noclipE = false
-local antifall = nil
-local currentTween = nil
+local RunService = game:GetService("RunService")
 local Settings = {
     ["autofarm_mobs"] = false,
     ["autofarm_boss"] = false,
-    ["TpSpeed"] = 75,
+    ["TpSpeed"] = 120,
     ["ChosenMob"] = "Green Demon",
     ["ChosenBoss"] = "Okuro"
 }
 
 local function noclip()
-    for i, v in pairs(plr.Character:GetDescendants()) do
-        if v:IsA("BasePart") and v.CanCollide == true then
-            v.CanCollide = false
+    if plr.Character then
+        for _, v in pairs(plr.Character:GetDescendants()) do
+            if v:IsA("BasePart") and v.CanCollide == true then
+                v.CanCollide = false
+            end
         end
     end
 end
 
-local function moveto(obj, speed)
+local function moveto(cframe, speed)
     if currentTween then
         currentTween:Cancel()
     end
 
-    local info = TweenInfo.new(((plr.Character.HumanoidRootPart.Position - obj.Position).Magnitude) / speed, Enum.EasingStyle.Linear)
-    local tween = TweenService:Create(plr.Character.HumanoidRootPart, info, {CFrame = obj})
+    local info = TweenInfo.new(((plr.Character.HumanoidRootPart.Position - cframe.Position).Magnitude) / speed, Enum.EasingStyle.Linear)
+    local tween = TweenService:Create(plr.Character.HumanoidRootPart, info, {CFrame = cframe})
 
     if not plr.Character.HumanoidRootPart:FindFirstChild("BodyVelocity") then
         antifall = Instance.new("BodyVelocity", plr.Character.HumanoidRootPart)
         antifall.Velocity = Vector3.new(0, 0, 0)
-        noclipE = game:GetService("RunService").Stepped:Connect(noclip)
+        antifall.MaxForce = Vector3.new(0, math.huge, 0)
+        noclipE = RunService.Stepped:Connect(noclip)
     end
 
     tween:Play()
@@ -59,7 +63,7 @@ local function moveto(obj, speed)
     end)
 end
 
--- Mobs list
+-- // MOBS/BOSS LIST \\ --
 local mob_list = {
     "Green Demon",
     "GenericOni",
@@ -82,12 +86,12 @@ local boss_list = {
     "Gyutaro",
 }
 
--- Loader
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
-local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
--- Window
+
+-- // Library \\ --
+local Library = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+
+-- // Window \\ --
 local Window = Fluent:CreateWindow({
     Title = "Demonfall AF",
     SubTitle = "by LynchYT",
@@ -98,105 +102,85 @@ local Window = Fluent:CreateWindow({
     MinimizeKey = Enum.KeyCode.RightControl
 })
 
-Fluent:Notify({
-        Title = "",
-        Content = "THANK YOU FOR USING MY SCRIPT",
-        SubContent = "",
-        Duration = 3
-})
-
--- Tabs
+-- // TABS \\ --
 local Tabs = {
-    Farming = Window:AddTab({ Title = "| Farming", Icon = "swords" }),
-    Misc = Window:AddTab({ Title = "| misc", Icon = "settings" }),
+    farmingtab = Window:AddTab({ Title = "Main", Icon = "swords" }),
+    misctab = Window:AddTab({ Title = "Misc", Icon = "brain-cog" }),
+    skillstab = Window:AddTab({ Title = "Auto Skill", Icon = "setting" }),
     Dupe = Window:AddTab({ Title = "| Dupe", Icon = "crown" }),
     Trinket = Window:AddTab({ Title = "Trinkets", Icon = "dollar-sign" }),
 }
-local Options = Fluent.Options
 
---Farming
-Tabs.Farming:AddButton({
-    Title = "Inf Health",
-    Callback = function()
-        game:GetService("ReplicatedStorage").Remotes.Async:FireServer("Character","FallDamageServer", 0/0)
-    end
-})
+local Section = Tabs.farmingtab:AddSection("FARM MOBS")
 
-local AutoGourdToggle = Tabs.Farming:AddToggle("AutoGourdToggle", { Title = "Auto Attack (Demon)", Default = false })
-AutoGourdToggle:OnChanged(function(v)
-    Settings["AutoGourd"] = v
-end)
-
--- Farming Mobs
-local DropdownMobs = Tabs.Farming:AddDropdown("DropdownMobs", {
-    Title = "Mobs ",
+local Dropdown = Tabs.farmingtab:AddDropdown("Dropdown", {
+    Title = "CHOOSE MOBS",
+    Description = "",
     Values = mob_list,
     Multi = false,
     Default = 1,
 })
 
-DropdownMobs:SetValue("Green Demon")
-
-DropdownMobs:OnChanged(function(v)
+Dropdown:OnChanged(function(v)
     Settings["ChosenMob"] = v
 end)
 
-local ToggleMobs = Tabs.Farming:AddToggle("MyToggleMobs", {Title = "AutoFarm Mobs", Default = false })
+local Toggle = Tabs.farmingtab:AddToggle("MyToggle", 
+{
+    Title = "FARM CHOSEN MOB", 
+    Description = "",
+    Default = false,
+    Callback = function(v)
+      Settings["autofarm_mobs"] = v
+        if not v and currentTween then
+            currentTween:Cancel()
+        end
+    end 
+})
 
-ToggleMobs:OnChanged(function(v)
-    Settings["autofarm_mobs"] = v
-    if not v and currentTween then
-        currentTween:Cancel()
-    end
-end)
+local Section = Tabs.farmingtab:AddSection("FARM BOSS")
 
-Options.MyToggleMobs:SetValue(false)
-
--- Farming Boss
-local DropdownBoss = Tabs.Farming:AddDropdown("DropdownBoss", {
-    Title = "Bosses ",
+local Dropdown = Tabs.farmingtab:AddDropdown("Dropdown", {
+    Title = "CHOOSE BOSS",
+    Description = "",
     Values = boss_list,
     Multi = false,
     Default = 1,
 })
 
-DropdownBoss:SetValue("Okuro")
-
-DropdownBoss:OnChanged(function(v)
+Dropdown:OnChanged(function(v)
     Settings["ChosenBoss"] = v
 end)
 
-local ToggleBoss = Tabs.Farming:AddToggle("MyToggleBoss", {Title = "AutoFarm Bosses", Default = false })
-
-ToggleBoss:OnChanged(function(v)
-    Settings["autofarm_boss"] = v
-    if not v and currentTween then
-        currentTween:Cancel()
-    end
-end)
-
-Options.MyToggleBoss:SetValue(false)
-
--- Tween Speed
-local Slider = Tabs.Farming:AddSlider("Slider", {
-    Title = "Tween Speed",
+local Toggle = Tabs.farmingtab:AddToggle("MyToggle", 
+{
+    Title = "FARM CHOSEN BOSS", 
     Description = "",
-    Default = 100,
-    Min = 50,
+    Default = false,
+    Callback = function(v)
+      Settings["autofarm_boss"] = v
+        if not v and currentTween then
+            currentTween:Cancel()
+        end
+    end 
+})
+
+local Section = Tabs.farmingtab:AddSection("TWEEN SPEED")
+
+local Slider = Tabs.farmingtab:AddSlider("Slider", 
+{
+    Title = "TWEEN SPEED",
+    Description = "",
+    Default = 120,
+    Min = 120,
     Max = 500,
-    Rounding = 10,
+    Rounding = 1,
     Callback = function(v)
         Settings["TpSpeed"] = v
     end
 })
 
-Slider:OnChanged(function(v)
-    Settings["TpSpeed"] = v
-end)
-
-Slider:SetValue(75)
-
--- Farming Features
+-- // FARMING FUNCTION \\ --
 local function getClosestTarget(targetName)
     local dist, target = math.huge
     for _, v in pairs(Workspace:GetChildren()) do
@@ -225,9 +209,27 @@ local function autofarm(type, targetName)
             end
 
             local characterModel = plr.Character:FindFirstChildWhichIsA("Model")
-            if characterModel and characterModel:FindFirstChild("Blade") then
-                if not characterModel:FindFirstChild("Equipped").Part0 then
-                    game:GetService("VirtualInputManager"):SendKeyEvent(true, "R", false, game)
+            local hasKatana = characterModel and characterModel:FindFirstChild("Blade")
+            
+            -- Attack logic
+            if enemy_mag <= 10 then
+                if hasKatana then
+                    if not characterModel:FindFirstChild("Equipped").Part0 then
+                        game:GetService("VirtualInputManager"):SendKeyEvent(true, "R", false, game)
+                    end
+                    
+                    if target:FindFirstChild("Block") then
+                        ReplicatedStorage.Remotes.Async:FireServer("Katana", "Heavy")
+                    else
+                        ReplicatedStorage.Remotes.Async:FireServer("Katana", "Server")
+                    end
+                else
+                    -- Fallback to Combat if no Katana is found
+                    local args = {
+                        [1] = "Combat",
+                        [2] = "Server"
+                    }
+                    ReplicatedStorage.Remotes.Async:FireServer(unpack(args))
                 end
             end
 
@@ -244,14 +246,6 @@ local function autofarm(type, targetName)
             for _, v in pairs(plr.Character:GetChildren()) do
                 if v:IsA("StringValue") and (v.Name == "Stun" or v.Name == "Attacking" or v.Name == "AttackAnnounce" or v.Name == "Busy" or v.Name == "SequenceCooldown" or v.Name == "SequenceFactor" or v.Name == "HeavyCooldown" or v.Name == "Sequence" or v.Name == "SequenceFactor") then
                     v:Destroy()
-                end
-            end
-
-            if enemy_mag <= 10 then
-                if target:FindFirstChild("Block") then
-                    ReplicatedStorage.Remotes.Async:FireServer("Katana", "Heavy")
-                else
-                    ReplicatedStorage.Remotes.Async:FireServer("Katana", "Server")
                 end
             end
         end)
@@ -274,51 +268,211 @@ spawn(function()
     end
 end)
 
--- Auto LMB Function
-local args = {
-    [1] = "Combat",
-    [2] = "Server"
-}
+--------------------------------------------------------------------------------Misc Tabs
 
-local heavyAttackArgs = {
-    [1] = "Combat",
-    [2] = "HeavyAttack"
-}
+Tabs.misctab:AddButton({
+    Title = "Infinite Health",
+    Description = "",
+    Callback = function()
+        game:GetService("ReplicatedStorage").Remotes.Async:FireServer("Character", "FallDamageServer", 0/0)
+    end
+})
+
+Tabs.misctab:AddButton({
+    Title = "Infinite Energy",
+    Description = "",
+    Callback = function()
+        local player = game:GetService("Players").LocalPlayer
+        while true do
+            player.Stamina.Value = math.huge
+            wait(0.1)
+        end
+    end
+})
+
+Tabs.misctab:AddButton({
+    Title = "Better Visuals",
+    Description = "",
+    Callback = function()
+        Settings["Visual"] = v
+    end
+})
+
+Tabs.misctab:AddButton({
+    Title = "Chat Logger",
+    Description = "",
+    Callback = function()
+        loadstring(game:HttpGet("https://pastebin.com/raw/stggPUBM", true))()
+    end
+})
+
+local Toggle = Tabs.misctab:AddToggle("MyToggle", 
+{
+    Title = "No Clip", 
+    Description = "",
+    Default = false,
+    Callback = function(v)
+      if v then
+            noclipT = game:GetService("RunService").Stepped:Connect(noclip)
+        else
+            if noclipT then
+                noclipT:Disconnect()
+            end
+        end
+    end 
+})
+
+
+local Toggle = Tabs.misctab:AddToggle("MyToggle", {
+    Title = "Auto Breath", 
+    Description = "",
+    Default = false,
+    Callback = function(v)
+        Settings["AutoBreath"] = v
+    end 
+})
+
+-- // MISCELLANEOUS FUNCTIONS \\ --
+local function disableLightingEffects(lighting)
+    lighting.SunRays.Enabled = false
+    lighting.ColorCorrection.Enabled = false
+    lighting.Blur.Enabled = false
+    lighting.Bloom.Enabled = false
+end
+
+local function modifyAtmosphere(atmosphere)
+    if atmosphere then
+        atmosphere.Density = 0
+        atmosphere.Glare = 0
+        atmosphere.Haze = 0
+    end
+end
+
+local function removeSpecificObjects(lighting, workspace)
+    local atmosphere = lighting:FindFirstChild("Atmosphere")
+    modifyAtmosphere(atmosphere)
+
+    local blind = lighting:FindFirstChild("Blind")
+    if blind then
+        blind:Destroy()
+    end
+
+    local folder = workspace:FindFirstChild("Folder")
+    if folder and folder:FindFirstChild("Part") then
+        folder:Destroy()
+    end
+end
 
 spawn(function()
-    while wait(0.1) do
-        if Settings.AutoGourd then
-            pcall(function()
-                local virtualInputManager = game:GetService("VirtualInputManager")
-                local replicatedStorage = game:GetService("ReplicatedStorage")
-                local remotes = replicatedStorage:FindFirstChild("Remotes")
-                local player = game.Players.LocalPlayer
-                local humanoidRootPart = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-
-                if remotes and remotes:FindFirstChild("Async") and humanoidRootPart then
-                    for i, v in pairs(workspace:GetChildren()) do
-                        if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v:FindFirstChild("Humanoid").Health > 0 then
-                            local partmag = (humanoidRootPart.Position - v.HumanoidRootPart.Position).magnitude
-                            if partmag < 20 then
-                                -- Simulate mouse button event for light attack
-                                virtualInputManager:SendMouseButtonEvent(500, 500, 0, true, game, 1)
-                                -- Invoke server function for light attack
-                                remotes.Async:FireServer(unpack(args))
-                                -- Simulate mouse button event for heavy attack
-                                virtualInputManager:SendMouseButtonEvent(500, 500, 1, true, game, 1)
-                                -- Invoke server function for heavy attack
-                                remotes.Async:FireServer(unpack(heavyAttackArgs))
-                                break -- Attack one mob at a time
-                            end
-                        end
-                    end
-                end
-            end)
+    while true do
+        wait(1)  -- Wait 1 second before running the check again
+        if Settings.Visual then
+            local lighting = game.Lighting  -- Use "Lighting" instead of "Lightning"
+            disableLightingEffects(lighting)
+            removeSpecificObjects(lighting, workspace)
         end
     end
 end)
 
----Dupe tabs
+
+local function clearDebuffs(character)
+    local busy = character:FindFirstChild("Busy")
+    if busy then
+        busy:Destroy()
+    end
+
+    local slow = character:FindFirstChild("Slow")
+    if slow then
+        slow:Destroy()
+    end
+end
+
+local function autoBreath()
+    local player = game:GetService("Players").LocalPlayer
+    local breathing = player.Breathing
+
+    if breathing and breathing.Value ~= 80 then
+        game:GetService("ReplicatedStorage").Remotes.Async:FireServer("Character", "Breath", true)
+    end
+end
+
+spawn(function()
+    while wait(1) do
+        if Settings.AutoBreath then
+            local character = game.Players.LocalPlayer.Character
+            if character then
+                clearDebuffs(character)
+                autoBreath()
+            end
+        end
+    end
+end)
+
+--------------------------------------------------------------------------------Skiils Tabs
+local UserInputService = game:GetService("UserInputService")
+
+local function sendKeyPress(keyCode)
+    -- Adjust this function based on how you simulate key presses in your environment
+    UserInputService.InputBegan:Fire({KeyCode = keyCode})
+end
+
+local function getClosestTarget(targetName)
+    local dist, target = math.huge
+    for _, v in pairs(Workspace:GetChildren()) do
+        if v:IsA("Model") and v.Name == targetName then
+            local mag = (plr.Character.HumanoidRootPart.Position - v:GetModelCFrame().p).Magnitude
+            if mag < dist then
+                dist = mag
+                target = v
+            end
+        end
+    end
+    return target
+end
+
+local function checkAndSendKey(toggleNumber)
+    local target = getClosestTarget("EnemyName")  -- Replace "EnemyName" with the actual enemy name
+    if target then
+        local enemy_mag = (plr.Character.HumanoidRootPart.Position - target:GetModelCFrame().p).Magnitude
+        if enemy_mag < 10 then  -- Adjusted the range to 10
+            sendKeyPress(Enum.KeyCode.Keypad[toggleNumber])
+        end
+    end
+end
+
+local toggleStates = {false, false, false, false, false, false, false, false}
+
+local function createToggle(title, index)
+    Tabs.skillstab:AddToggle(title, {
+        Title = title, 
+        Description = "",
+        Default = false,
+        Callback = function(state)
+            toggleStates[index] = state
+        end
+    })
+end
+
+createToggle("Skill 1", 1)
+createToggle("Skill 2", 2)
+createToggle("Skill 3", 3)
+createToggle("Skill 4", 4)
+createToggle("Skill 5", 5)
+createToggle("Skill 6", 6)
+createToggle("Skill 7", 7)
+createToggle("Skill 8", 8)
+
+-- Loop to check toggles and send key presses every 0.1 seconds
+while true do
+    wait(0.1)  -- Wait for 0.1 seconds
+    for i, isEnabled in ipairs(toggleStates) do
+        if isEnabled then
+            checkAndSendKey(i)
+        end
+    end
+end
+
+--------------------------------------------------------------------------------Duping Tabs
 local function DupeItems(itemNames)
     for _, itemName in ipairs(itemNames) do
         local args = {
@@ -398,30 +552,7 @@ Tabs.Dupe:AddButton({
     end
 })
 
--- // Close GUI Button \\ --
-local ScreenGui= Instance.new("ScreenGui")
-local ImageButton= Instance.new("ImageButton")
-local UICorner= Instance.new("UICorner")
-
-ScreenGui.Name= ""
-ScreenGui.Parent= game.CoreGui or game.Players.LocalPlayer.PlayerGui
-ScreenGui.ZIndexBehavior= Enum.ZIndexBehavior.Sibling
-
-ImageButton.Parent= ScreenGui
-ImageButton.BackgroundColor3= Color3.fromRGB(0, 0, 0)
-ImageButton.BackgroundTransparency= 1
-ImageButton.BorderSizePixel= 0
-ImageButton.Position= UDim2.new(0.120833337, 0, 0.0952890813, 0)
-ImageButton.Size= UDim2.new(0, 50, 0, 50)
-ImageButton.Image= "https://www.roblox.com/asset/?id=18687520299"
-
-UICorner.Parent= ImageButton
-
-ImageButton.MouseButton1Down:Connect(function()
-    game:GetService("VirtualInputManager"):SendKeyEvent(true,305,false,game)
-    game:GetService("VirtualInputManager"):SendKeyEvent(false,305,false,game)
-end)
-
+--------------------------------------------------------------------------------Trinket Tabs
 -- // List \\ --
 local Ore_list = {
   "Sun Ore",
@@ -616,4 +747,75 @@ spawn(function()
             end
         end
     end
+end)
+
+--------------------------------------------------------------------------------Huge GUI
+local ScreenGui = Instance.new("ScreenGui")
+local ImageButton = Instance.new("ImageButton")
+local UICorner = Instance.new("UICorner")
+local dragging = false
+local dragStart
+local startPos
+
+ScreenGui.Name = ""
+ScreenGui.Parent = game.CoreGui or game.Players.LocalPlayer.PlayerGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+ImageButton.Parent = ScreenGui
+ImageButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ImageButton.BackgroundTransparency = 1
+ImageButton.BorderSizePixel = 0
+ImageButton.Position = UDim2.new(0.120833337, 0, 0.0952890813, 0)
+ImageButton.Size = UDim2.new(0, 50, 0, 50)
+ImageButton.Image = "https://www.roblox.com/asset/?id=18687520299"
+
+UICorner.Parent = ImageButton
+
+-- Function to handle start of dragging
+local function onDragStart(input)
+    dragging = true
+    dragStart = input.Position
+    startPos = ImageButton.Position
+end
+
+-- Function to handle dragging
+local function onDrag(input)
+    if dragging then
+        local delta = input.Position - dragStart
+        ImageButton.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end
+
+-- Function to handle end of dragging
+local function onDragEnd()
+    dragging = false
+end
+
+-- Connect input events to the functions
+ImageButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        onDragStart(input)
+    end
+end)
+
+ImageButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        onDrag(input)
+    end
+end)
+
+ImageButton.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        onDragEnd()
+    end
+end)
+
+ImageButton.MouseButton1Down:Connect(function()
+    game:GetService("VirtualInputManager"):SendKeyEvent(true, 305, false, game)
+    game:GetService("VirtualInputManager"):SendKeyEvent(false, 305, false, game)
 end)
