@@ -452,6 +452,64 @@ local Flower_list = {
 }
 
 -- Initialize Settings Table
+local Settings = {
+    ChosenTrinket = Trinket_list[1],
+    TrinketFarm = false,
+    RandomTrinketFarm = false,
+    TpSpeed = 100
+}
+
+-- Services and Variables
+local runService = game:GetService("RunService")
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local localPlayer = game.Players.LocalPlayer
+local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+
+-- Trinkets Toggle for Random Trinket
+local ToggleRandomTrinketFarm = Tabs.Trinkets:AddToggle("RandomTrinketFarm", {
+    Title = "Farm Random Trinket",
+    Default = false
+})
+
+-- Farming Function
+local function farmRandomTrinket()
+    while Settings.RandomTrinketFarm do
+        if not localPlayer or not character then return end
+        for _, v in pairs(workspace:GetChildren()) do
+            if not Settings.RandomTrinketFarm then return end
+            if v:FindFirstChild("PickableItem") and v:FindFirstChild("Part") then
+                -- Check if the trinket is not the chosen one
+                if v.PickableItem.Name ~= Settings.ChosenTrinket then
+                    -- Move to trinket position
+                    character.HumanoidRootPart.CFrame = v:FindFirstChild("Part").CFrame
+                    wait(0.5) -- Wait briefly to simulate movement time
+
+                    -- Simulate interaction with the trinket
+                    replicatedStorage.Remotes.Async:FireServer("Character", "Interaction", v:FindFirstChild("Part"))
+                    wait(1) -- Ensure there’s enough time for the interaction to complete
+                end
+            end
+        end
+        wait(1) -- Optional delay to prevent too many operations
+    end
+end
+
+-- Toggle Handler
+ToggleRandomTrinketFarm:OnChanged(function(v)
+    Settings["RandomTrinketFarm"] = v
+    if v then
+        spawn(farmRandomTrinket)
+    end
+end)
+
+-- Update character if it respawns
+local function updateCharacter()
+    character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+end
+
+localPlayer.CharacterAdded:Connect(updateCharacter)
+
+-- Initialize Settings Table
 local Settings = {}
 
 -- // Ores Dropdown \\ --
