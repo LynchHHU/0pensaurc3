@@ -106,7 +106,6 @@ local Window = Fluent:CreateWindow({
 local Tabs = {
     farmingtab = Window:AddTab({ Title = "Main", Icon = "swords" }),
     misctab = Window:AddTab({ Title = "Misc", Icon = "brain-cog" }),
-    skillstab = Window:AddTab({ Title = "Auto Skill", Icon = "setting" }),
     Dupe = Window:AddTab({ Title = "| Dupe", Icon = "crown" }),
     Trinket = Window:AddTab({ Title = "Trinkets", Icon = "dollar-sign" }),
 }
