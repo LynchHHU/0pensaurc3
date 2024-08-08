@@ -110,6 +110,7 @@ local Tabs = {
     Farming = Window:AddTab({ Title = "| Farming", Icon = "swords" }),
     Misc = Window:AddTab({ Title = "| misc", Icon = "settings" }),
     Dupe = Window:AddTab({ Title = "| Dupe", Icon = "crown" }),
+    Trinket = Window:AddTab({ Title = "Trinkets", Icon = "dollar-sign" }),
 }
 local Options = Fluent.Options
 
@@ -419,4 +420,142 @@ UICorner.Parent= ImageButton
 ImageButton.MouseButton1Down:Connect(function()
     game:GetService("VirtualInputManager"):SendKeyEvent(true,305,false,game)
     game:GetService("VirtualInputManager"):SendKeyEvent(false,305,false,game)
+end)
+
+-- // List \\ --
+local Ore_list = {
+  "Sun Ore",
+  "Iron Ore"
+}
+
+local Trinket_list = {
+  "Ancient Coins",
+  "Bronze Jar",
+  "Copper Goblet",
+  "Gold Crown",
+  "Gold Jar",
+  "Gold Goblet",
+  "Golden Ring",
+  "Green Jewel",
+  "Perfect Crystal",
+  "Red Jewel",
+  "Rusty Goblet",
+  "Silver Ring",
+  "Silver Jar",
+  "Silver Goblet",
+}
+
+local Flower_list = {
+  "Flower1",
+  "Flower2",
+  "Flower3",
+}
+
+-- Initialize Settings Table
+local Settings = {}
+
+-- // Ores Dropdown \\ --
+local DropdownOre = Tabs.Trinket:AddDropdown("Ore", {
+    Title = "Choose Ore",
+    Description = "Choose what ore to farm",
+    Values = Ore_list,
+    Multi = false,
+    Default = 1,
+})
+
+DropdownOre:OnChanged(function(v)
+    Settings["ChosenOre"] = v
+end)
+
+-- // Ore Toggle \\ --
+local ToggleOre = Tabs.Trinket:AddToggle("Ore", {
+    Title = "Farm Ore", 
+    Description = "Teleport you to ore, must equip pickaxe to work",
+    Default = false,
+    Callback = function(v)
+        Settings["FarmOre"] = v
+    end 
+})
+
+-- // Flowers Dropdown \\ --
+local DropdownFlower = Tabs.Trinket:AddDropdown("Flowers", {
+    Title = "Choose Flower",
+    Values = Flower_list,
+    Multi = false,
+    Default = 1,
+})
+
+DropdownFlower:SetValue("Flower1")
+
+DropdownFlower:OnChanged(function(v)
+    Settings["ChosenFlower"] = v
+end)
+
+-- // Flower Toggle \\ --
+local ToggleFlower = Tabs.Trinket:AddToggle("Flower", {
+    Title = "Farm Flower",
+    Default = false
+})
+
+ToggleFlower:OnChanged(function(v)
+    Settings.FarmFlower = v
+end)
+
+-- // Function Farm O/T/F \\ --
+local function getOre()
+    local dist, ore = math.huge
+    for i, v in pairs(game:GetService("Workspace").Map.Minerals:GetDescendants()) do
+        if v.Name == "MineralName" and v.Value == Settings.ChosenOre then
+            local oremag = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v.Parent.Position).magnitude
+            if oremag < dist then
+                dist = oremag
+                ore = v.Parent
+            end
+        end
+    end
+    return ore
+end
+
+local function moveto(destinationCFrame, speed)
+    local character = game.Players.LocalPlayer.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        local humanoidRootPart = character.HumanoidRootPart
+        humanoidRootPart.CFrame = destinationCFrame
+    end
+end
+
+spawn(function()
+    while wait() do
+        if Settings.FarmOre then
+            local ore = getOre()
+            if ore then
+                local ore_mag = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - ore.Position).magnitude
+                if ore_mag <= 5 then
+                    game:GetService("ReplicatedStorage").Remotes.Sync:InvokeServer("Pickaxe", "Server")
+                else
+                    moveto(ore.CFrame, tonumber(Settings.TpSpeed or 100))
+                end
+            end
+        end
+    end
+end)
+
+local function teleportTo(destinationCFrame)
+    local character = game.Players.LocalPlayer.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        character.HumanoidRootPart.CFrame = destinationCFrame
+    end
+end
+
+-- Main farming loop for flowers
+spawn(function()
+    while wait() do
+        if Settings.FarmFlower then
+            local chosenFlower = game.Workspace.Map:FindFirstChild(Settings.ChosenFlower)
+            if chosenFlower then
+                local flowerCFrame = chosenFlower:GetModelCFrame() * CFrame.new(0, 0, 0)
+                teleportTo(flowerCFrame)
+            end
+        end
+    end
 end)
