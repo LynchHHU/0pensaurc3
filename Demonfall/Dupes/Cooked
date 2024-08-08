@@ -750,72 +750,25 @@ spawn(function()
 end)
 
 --------------------------------------------------------------------------------Huge GUI
-local ScreenGui = Instance.new("ScreenGui")
-local ImageButton = Instance.new("ImageButton")
-local UICorner = Instance.new("UICorner")
-local dragging = false
-local dragStart
-local startPos
+local ScreenGui= Instance.new("ScreenGui")
+local ImageButton= Instance.new("ImageButton")
+local UICorner= Instance.new("UICorner")
 
-ScreenGui.Name = ""
-ScreenGui.Parent = game.CoreGui or game.Players.LocalPlayer.PlayerGui
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Name= ""
+ScreenGui.Parent= game.CoreGui or game.Players.LocalPlayer.PlayerGui
+ScreenGui.ZIndexBehavior= Enum.ZIndexBehavior.Sibling
 
-ImageButton.Parent = ScreenGui
-ImageButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-ImageButton.BackgroundTransparency = 1
-ImageButton.BorderSizePixel = 0
-ImageButton.Position = UDim2.new(0.120833337, 0, 0.0952890813, 0)
-ImageButton.Size = UDim2.new(0, 50, 0, 50)
-ImageButton.Image = "https://www.roblox.com/asset/?id=18687520299"
+ImageButton.Parent= ScreenGui
+ImageButton.BackgroundColor3= Color3.fromRGB(0, 0, 0)
+ImageButton.BackgroundTransparency= 1
+ImageButton.BorderSizePixel= 0
+ImageButton.Position= UDim2.new(0.120833337, 0, 0.0952890813, 0)
+ImageButton.Size= UDim2.new(0, 50, 0, 50)
+ImageButton.Image= "https://www.roblox.com/asset/?id=18687520299"
 
-UICorner.Parent = ImageButton
-
--- Function to handle start of dragging
-local function onDragStart(input)
-    dragging = true
-    dragStart = input.Position
-    startPos = ImageButton.Position
-end
-
--- Function to handle dragging
-local function onDrag(input)
-    if dragging then
-        local delta = input.Position - dragStart
-        ImageButton.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-end
-
--- Function to handle end of dragging
-local function onDragEnd()
-    dragging = false
-end
-
--- Connect input events to the functions
-ImageButton.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        onDragStart(input)
-    end
-end)
-
-ImageButton.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        onDrag(input)
-    end
-end)
-
-ImageButton.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        onDragEnd()
-    end
-end)
+UICorner.Parent= ImageButton
 
 ImageButton.MouseButton1Down:Connect(function()
-    game:GetService("VirtualInputManager"):SendKeyEvent(true, 305, false, game)
-    game:GetService("VirtualInputManager"):SendKeyEvent(false, 305, false, game)
+    game:GetService("VirtualInputManager"):SendKeyEvent(true,305,false,game)
+    game:GetService("VirtualInputManager"):SendKeyEvent(false,305,false,game)
 end)
